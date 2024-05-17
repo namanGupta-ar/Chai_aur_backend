@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 
 const userSchema = new Schema(
   {
-    username: {
+    userName: {
       type: String,
       required: true,
       unique: true,
@@ -57,8 +57,35 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-userSchema.methods.isPasswordCorrect = async function(password) {
-    return await bcrypt.compare(password, this.password)
-}  // custom hook
+userSchema.methods.isPasswordCorrect = async function (password) {
+  return await bcrypt.compare(password, this.password);
+}; // custom hook
+
+userSchema.methods.generateAccessToken = function () {
+  jwt.sign(
+    {
+      _id: this._id,
+      email: this.email,
+      userName: this.userName,
+      fullName: this.fullName,
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+    }
+  );
+};
+
+userSchema.methods.generateRefreshToken = function () {
+  jwt.sign(
+    {
+      _id: this._id
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+    }
+  );
+};
 
 export const User = model("User", userSchema);
